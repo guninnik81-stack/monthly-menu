@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Меню на месяц</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 600px;
+            position: relative;
+        }
+        .close-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white rounded-3xl shadow-xl p-8 max-w-6xl w-full">
+        <h1 class="text-4xl font-bold text-center text-gray-800 mb-8">Меню на месяц</h1>
+        
+        <div id="menu-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Menu cards will be generated here -->
+        </div>
+    </div>
+
+    <!-- Modal for recipe display -->
+    <div id="recipeModal" class="modal-overlay">
+        <div class="modal-content">
+            <span id="closeModal" class="close-button">&times;</span>
+            <h2 id="recipeTitle" class="text-2xl font-bold text-gray-800 mb-4"></h2>
+            <p id="recipeText" class="text-gray-600 leading-relaxed"></p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuData = [];
+
+            // Helper function to create a day's menu
+            const createDayMenu = (day, morning, afternoon, evening) => {
+                return {
+                    day: day,
+                    meals: {
+                        утро: morning,
+                        обед: afternoon,
+                        ужин: evening
+                    }
+                };
+            };
+            
+            // Recipe data mapping
+            const recipes = {
+                'Гречневая каша': 'Промойте гречку. Варите в пропорции 1:2 (1 часть гречки на 2 части воды) до готовности. Добавьте немного оливкового масла.',
+                'Запеченная куриная грудка': 'Натрите куриную грудку солью и травами. Запекайте в духовке при 180°C до готовности (около 25-30 минут).',
+                'Рыба на пару': 'Поместите филе рыбы (хек или минтай) в пароварку. Готовьте 15-20 минут. Подавайте с лимоном и зеленью.',
+                'Нежирный творог': 'Смешайте творог с натуральным йогуртом и нарезанными фруктами. По желанию можно добавить семена чиа.',
+                'Гречневая каша с индейкой': 'Отварите гречку. Отварите филе индейки. Подавайте вместе с нарезанными свежими овощами.',
+                'Суп-пюре из брокколи': 'Отварите брокколи до мягкости. Измельчите блендером, добавив немного бульона. Добавьте специи по вкусу.',
+                'Яйца вкрутую': 'Варите яйца в кипящей воде 8-10 минут. Охладите и очистите. Ешьте с цельнозерновым хлебом.',
+                'Котлеты из индейки': 'Измельчите филе индейки в фарш. Сформируйте котлеты и приготовьте на пару.',
+                'Салат из тунца': 'Смешайте консервированный тунец (в собственном соку), нарезанные яйца, огурцы и помидоры. Заправьте оливковым маслом.',
+                'Рисовая каша': 'Промойте рис. Варите на воде до готовности, добавьте немного сухофруктов.',
+                'Запеченная рыба с рисом': 'Запеките филе рыбы. Отварите бурый рис. Подавайте вместе.',
+                'Овощное рагу': 'Нарежьте цуккини, морковь, перец, лук. Тушите в небольшом количестве воды до мягкости.',
+                'Нежирный йогурт с орехами': 'Смешайте йогурт с измельченными орехами и кусочками банана.',
+                'Омлет с овощами': 'Взбейте 2-3 яйца с небольшим количеством молока. Вылейте на разогретую сковороду и добавьте мелко нарезанные овощи. Готовьте на медленном огне.',
+                'Сырники из творога': 'Смешайте творог, яйцо и немного муки. Сформируйте сырники и запекайте в духовке.',
+                'Овощной суп': 'Отварите овощи (морковь, лук, картофель, капуста). Подавайте с зеленью и кусочком отварной курицы.',
+                'Филе кролика': 'Запекайте филе кролика в фольге с травами и овощами.',
+                'Куриный бульон': 'Отварите курицу. Процедите бульон, подавайте с отварным мясом и зеленью.',
+                'Паровой омлет': 'Взбейте яйца, добавьте молоко и нарезанные помидоры. Готовьте на пару до готовности.'
+            };
+            
+            // Loop to create 30 days of menu
+            for (let i = 1; i <= 30; i++) {
+                let morning, afternoon, evening;
+                const weekDay = (i - 1) % 7;
+                
+                switch(weekDay) {
+                    case 0: // Monday
+                        morning = 'Гречневая каша (50 г) на воде с небольшим количеством оливкового масла. (Примерно 8:00)';
+                        afternoon = 'Запеченная куриная грудка (180 г) с овощным салатом (250 г). (Примерно 13:00)';
+                        evening = 'Рыба на пару (150 г) с тушеными овощами (200 г). (Примерно 18:00)';
+                        break;
+                    case 1: // Tuesday
+                        morning = 'Нежирный творог (200 г) с йогуртом и яблоком. (Примерно 8:00)';
+                        afternoon = 'Гречневая каша (120 г) с отварной индейкой (100 г) и свежими овощами. (Примерно 13:00)';
+                        evening = 'Суп-пюре из брокколи (300 г). (Примерно 18:00)';
+                        break;
+                    case 2: // Wednesday
+                        morning = 'Два яйца вкрутую и кусочек цельнозернового хлеба (30 г). (Примерно 8:00)';
+                        afternoon = 'Котлеты из индейки на пару (150 г) с тушеной капустой (200 г). (Примерно 13:00)';
+                        evening = 'Салат из тунца (100 г), яиц и свежих овощей. (Примерно 18:00)';
+                        break;
+                    case 3: // Thursday
+                        morning = 'Рисовая каша на воде (50 г) с сухофруктами (20 г). (Примерно 8:00)';
+                        afternoon = 'Запеченная рыба (150 г) с бурым рисом (50 г). (Примерно 13:00)';
+                        evening = 'Овощное рагу (300 г). (Примерно 18:00)';
+                        break;
+                    case 4: // Friday
+                        morning = 'Нежирный йогурт (150 г) с орехами (30 г) и бананом (100 г). (Примерно 8:00)';
+                        afternoon = 'Куриная грудка (150 г), запеченная с овощами (150 г). (Примерно 13:00)';
+                        evening = 'Омлет с овощами (2-3 яйца и 100 г овощей). (Примерно 18:00)';
+                        break;
+                    case 5: // Saturday
+                        morning = 'Сырники из нежирного творога (150 г), запеченные в духовке. (Примерно 9:00)';
+                        afternoon = 'Легкий овощной суп (300 г) и отварная курица (100 г). (Примерно 14:00)';
+                        evening = 'Запеченное филе кролика (150 г) с овощами (150 г). (Примерно 19:00)';
+                        break;
+                    case 6: // Sunday
+                        morning = 'Гречневая каша (50 г) с молоком. (Примерно 9:00)';
+                        afternoon = 'Куриный бульон (250 г) с отварным мясом (100 г) и зеленью. (Примерно 14:00)';
+                        evening = 'Паровой омлет с помидорами и зеленью (2-3 яйца и 100 г овощей). (Примерно 19:00)';
+                        break;
+                }
+                menuData.push(createDayMenu(`День ${i}`, morning, afternoon, evening));
+            }
+            
+            const menuContainer = document.getElementById('menu-container');
+
+            menuData.forEach(dayMenu => {
+                const dayCard = document.createElement('div');
+                dayCard.className = 'bg-gray-50 rounded-2xl p-6 shadow-md transition-transform duration-300 transform hover:scale-105';
+                
+                dayCard.innerHTML = `
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-4">${dayMenu.day}</h2>
+                    <div class="space-y-4">
+                        <div class="border-b border-gray-200 pb-2 cursor-pointer" onclick="showRecipe('Утро', '${dayMenu.meals.утро}')">
+                            <h3 class="font-medium text-lg text-gray-600">Утро</h3>
+                            <p class="text-gray-500">${dayMenu.meals.утро}</p>
+                        </div>
+                        <div class="border-b border-gray-200 pb-2 cursor-pointer" onclick="showRecipe('Обед', '${dayMenu.meals.обед}')">
+                            <h3 class="font-medium text-lg text-gray-600">Обед</h3>
+                            <p class="text-gray-500">${dayMenu.meals.обед}</p>
+                        </div>
+                        <div class="cursor-pointer" onclick="showRecipe('Ужин', '${dayMenu.meals.ужин}')">
+                            <h3 class="font-medium text-lg text-gray-600">Ужин</h3>
+                            <p class="text-gray-500">${dayMenu.meals.ужин}</p>
+                        </div>
+                    </div>
+                `;
+                menuContainer.appendChild(dayCard);
+            });
+
+            // Modal logic
+            const modal = document.getElementById('recipeModal');
+            const modalTitle = document.getElementById('recipeTitle');
+            const modalText = document.getElementById('recipeText');
+            const closeModal = document.getElementById('closeModal');
+
+            window.showRecipe = (mealTime, mealName) => {
+                let recipeKey = mealName.split('(')[0].trim();
+                const recipe = recipes[recipeKey] || 'Рецепт не найден.';
+                modalTitle.textContent = `${mealTime}: ${recipeKey}`;
+                modalText.textContent = recipe;
+                modal.style.display = 'flex';
+            };
+
+            closeModal.onclick = () => {
+                modal.style.display = 'none';
+            };
+
+            window.onclick = (event) => {
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            };
+        });
+    </script>
+</body>
+</html>
